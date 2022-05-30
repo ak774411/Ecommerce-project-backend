@@ -24,27 +24,29 @@ public class MyDataRestConfig implements RepositoryRestConfigurer {
     private EntityManager entityManager;
 
     @Autowired
-    public MyDataRestConfig(EntityManager theEntityManager){
+    public MyDataRestConfig(EntityManager theEntityManager) {
         entityManager = theEntityManager;
     }
 
+
     @Override
     public void configureRepositoryRestConfiguration(RepositoryRestConfiguration config, CorsRegistry cors) {
-        RepositoryRestConfigurer.super.configureRepositoryRestConfiguration(config, cors);
 
-        HttpMethod[] theUnsupportedActions = {HttpMethod.PUT, HttpMethod.POST, HttpMethod.DELETE, HttpMethod.PATCH};
-
-        // disable HTTP methods for Product: PUT, POST, DELETE and PATCH
-        disableHttpMethods(Product.class,config, theUnsupportedActions);
+        HttpMethod[] theUnsupportedActions = {HttpMethod.PUT, HttpMethod.POST,
+                HttpMethod.DELETE, HttpMethod.PATCH};
 
         // disable HTTP methods for ProductCategory: PUT, POST, DELETE and PATCH
-        disableHttpMethods(ProductCategory.class,config, theUnsupportedActions);
-        disableHttpMethods(Country.class,config, theUnsupportedActions);
-        disableHttpMethods(State.class,config, theUnsupportedActions);
-        disableHttpMethods(Order.class,config, theUnsupportedActions);
+        disableHttpMethods(Product.class, config, theUnsupportedActions);
+        disableHttpMethods(ProductCategory.class, config, theUnsupportedActions);
+        disableHttpMethods(Country.class, config, theUnsupportedActions);
+        disableHttpMethods(State.class, config, theUnsupportedActions);
+        disableHttpMethods(Order.class, config, theUnsupportedActions);
 
+        // call an internal helper method
         exposeIds(config);
-        cors.addMapping("api/**").allowedOrigins(theAllowedOrigins);
+
+        // configure cors mapping
+        cors.addMapping(config.getBasePath() + "/**").allowedOrigins(theAllowedOrigins);
     }
 
     private void disableHttpMethods(Class theClass, RepositoryRestConfiguration config, HttpMethod[] theUnsupportedActions) {
@@ -55,16 +57,24 @@ public class MyDataRestConfig implements RepositoryRestConfigurer {
     }
 
     private void exposeIds(RepositoryRestConfiguration config) {
+
+        // expose entity ids
+        //
+
+        // - get a list of all entity classes from the entity manager
         Set<EntityType<?>> entities = entityManager.getMetamodel().getEntities();
 
+        // - create an array of the entity types
         List<Class> entityClasses = new ArrayList<>();
 
-        for(EntityType tempEntityType:entities){
+        // - get the entity types for the entities
+        for (EntityType tempEntityType : entities) {
             entityClasses.add(tempEntityType.getJavaType());
         }
 
+        // - expose the entity ids for the array of entity/domain types
         Class[] domainTypes = entityClasses.toArray(new Class[0]);
         config.exposeIdsFor(domainTypes);
-
     }
 }
+

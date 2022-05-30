@@ -1,21 +1,17 @@
 package com.luv2code.ecommerce.config;
 
-import org.springframework.context.annotation.Bean;
+import com.okta.spring.boot.oauth.Okta;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.Arrays;
 
 @Configuration
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+
+        // protect endpoint /api/orders
         http.authorizeRequests()
                 .antMatchers("/api/orders/**")
                 .authenticated()
@@ -23,17 +19,16 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .oauth2ResourceServer()
                 .jwt();
 
+        // add CORS filters
         http.cors();
-    }
 
-    @Bean
-    CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200"));
-        configuration.setAllowedMethods(Arrays.asList("GET","POST"));
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
+        // force a non-empty response body for 401's to make the response more friendly
+        Okta.configureResourceServer401ResponseBody(http);
 
+        // disable CSRF since we are not using Cookies for session tracking
+        http.csrf().disable();
+    }
 }
+
+
+
